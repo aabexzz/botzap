@@ -36,7 +36,8 @@ const menu = `🖥 LCC BOT V.1 • AUXILIAR 🤖
 4️⃣ PERGUNTAS 🔎  
 5️⃣ FOTOS DA TURMA 📷  
 6️⃣ QUANTIDADE DE ALUNOS 👥  
-7️⃣ QUER UMA MÚSICA? 💿
+7️⃣ QUER UMA MÚSICA? 💿  
+8️⃣ CRIAR FIGURINHA ✨
 
 👉 *RESPONDA COM O NÚMERO DA OPÇÃO DESEJADA.*`;
 
@@ -93,9 +94,12 @@ Deseja uma foto de horários gerais? Digite /sim`, { quotedMessageId: replyId })
         case '7':
             client.sendMessage(msg.from, '💿 Para ouvir música, digite:\n`/musica [nome da música]`', { quotedMessageId: replyId });
             break;
+        case '8':
+            client.sendMessage(msg.from, '✨ Para criar figurinha:\n\n👉 Envie uma *imagem, vídeo (até 6s) ou gif* junto com o comando `/fig`\n\nOu digite `/sticker` para receber uma figurinha pronta.', { quotedMessageId: replyId });
+            break;
     }
 
-    // Comando música (yt-search)
+    // ------------------- MÚSICA -------------------
     if (body.startsWith('/musica ')) {
         const query = msg.body.replace('/musica ', '').trim();
         if (!query) {
@@ -119,12 +123,39 @@ Deseja uma foto de horários gerais? Digite /sim`, { quotedMessageId: replyId })
         }
     }
 
-    // Responder ao /sim enviando a foto do horário
+    // ------------------- FIGURINHAS -------------------
+    if ((body === '/fig' || body === '!fig') && msg.hasMedia) {
+        try {
+            const media = await msg.downloadMedia();
+            await client.sendMessage(msg.from, media, { sendMediaAsSticker: true });
+            client.sendMessage(msg.from, '✅ Figurinha criada com sucesso!', { quotedMessageId: replyId });
+        } catch (err) {
+            console.error('❌ Erro ao criar figurinha:', err);
+            client.sendMessage(msg.from, '❌ Não consegui criar a figurinha.', { quotedMessageId: replyId });
+        }
+    }
+
+    if (body === '/sticker' || body === '!sticker') {
+        try {
+            const stickerPath = path.join(__dirname, 'arquivos', 'sticker.webp');
+            if (fs.existsSync(stickerPath)) {
+                const sticker = MessageMedia.fromFilePath(stickerPath);
+                await client.sendMessage(msg.from, sticker, { sendMediaAsSticker: true });
+            } else {
+                client.sendMessage(msg.from, '❌ Nenhuma figurinha pronta encontrada.', { quotedMessageId: replyId });
+            }
+        } catch (err) {
+            console.error('❌ Erro ao enviar figurinha pronta:', err);
+            client.sendMessage(msg.from, '❌ Não consegui enviar a figurinha pronta.', { quotedMessageId: replyId });
+        }
+    }
+
+    // ------------------- FOTO DE HORÁRIOS -------------------
     if (body === '/sim') {
         sendFile(msg.from, 'horario.png', '🗓 Foto dos horários da semana', replyId);
     }
 
-    // Comando pergunta
+    // ------------------- PERGUNTAS -------------------
     if (body.startsWith('/pergunta')) {
         let pergunta = msg.body.replace('/pergunta','').trim();
         if(pergunta){
